@@ -1,9 +1,10 @@
 const mongoose = require("mongoose");
 
 const supplierShema = new mongoose.Schema({
-    title: { type: String },
-    contactMail: { type: String },
-    phone: { type: String },
+    title: { type: String, required: true, trim: true },
+    contactMail: { type: String, trim: true },
+    phone: { type: String, trim: true },
+    notes: { type: String, trim: true },
     createdAt: { type: String },
     isActive: { type: Boolean },
 });
