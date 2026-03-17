@@ -2,7 +2,9 @@ const Supplier = require("../models/Supplier");
 
 exports.createSupplier = async (req, res) => {
     try {
-        const { title, contactMail, phone } = req.body;
+        const { title } = req.body;
+        const contactMail = req.body.contactEmail || "";
+        const phone = req.body.phone || "";
 
         const supplier = await Supplier.create({
             title,
@@ -20,12 +22,12 @@ exports.createSupplier = async (req, res) => {
 };
 
 exports.getSupplierById = async (req, res) => {
-    const { id } = req.params;
-    console.log(id);
-
     try {
+        const { id } = req.params;
+
         const supplier = await Supplier.findById(id);
-        console.log(supplier);
+
+        if (!supplier) return res.status(404).json({ error: "Supplier not found" });
 
         return res.json(supplier);
     } catch (err) {
@@ -33,11 +35,10 @@ exports.getSupplierById = async (req, res) => {
         return res.status(500).json({ error: `Could not get supplier by id ${err.message}` });
     }
 };
+
 exports.getSuppliers = async (_req, res) => {
     try {
         const suppliers = await Supplier.find();
-        console.log(suppliers);
-
         return res.json(suppliers);
     } catch (err) {
         console.error(`Could not get suppliers ${err.message}`);
@@ -48,17 +49,28 @@ exports.getSuppliers = async (_req, res) => {
 exports.updateById = async (req, res) => {
     try {
         const { id } = req.params;
-        const { title, contactMail, phone, isActive } = req.body;
+        const { title, isActive } = req.body;
 
-        const supplier = await Supplier.findById(id);
-        supplier.title = title;
-        supplier.contactMail = contactMail;
-        supplier.phone = phone;
-        supplier.isActive = isActive;
-        await supplier.save();
-        console.log(supplier);
+        const contactMail = req.body.contactEmail || "";
+        const phone = req.body.phone || "";
 
-        return res.status(200).json(supplier);
+        const updatedSupplier = await Supplier.findByIdAndUpdate(
+            id,
+            {
+                title,
+                contactMail,
+                phone,
+                isActive,
+            },
+            { new: true },
+        );
+        console.log(updatedSupplier);
+
+        if (!updatedSupplier) {
+            return res.status(404).json({ error: "Supplier not found" });
+        }
+
+        return res.status(200).json(updatedSupplier);
     } catch (err) {
         console.error(`Could not update a supplier ${err.message}`);
         return res.status(500).json({ error: `Could not update a supplier ${err.message}` });
