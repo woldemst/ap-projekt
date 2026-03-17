@@ -12,8 +12,10 @@ app.use(express.json());
 
 // Routes
 const supplierRoutes = require("./routes/supplier-routes");
+const reportRoutes = require("./routes/report-routes.js");
 
 app.use("/api/suppliers", supplierRoutes);
+app.use("/api/reports", reportRoutes);
 
 mongoose
     .connect(DB_URL)
