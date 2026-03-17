@@ -19,3 +19,17 @@ exports.createReport = async (req, res) => {
         return res.status(500).json({ error: `Could not create a report ${err.message}` });
     }
 };
+
+exports.getBySupplierId = async (req, res) => {
+    try {
+        const { supplierId } = req.params;
+
+        const report = await Report.find({ supplierId });
+        console.log(report);
+
+        return res.json(report);
+    } catch (err) {
+        console.error(`Could not create a report ${err.message}`);
+        return res.status(500).json({ error: `Could not create a report ${err.message}` });
+    }
+};

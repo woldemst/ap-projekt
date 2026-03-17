@@ -8,6 +8,7 @@ exports.createSupplier = async (req, res) => {
             title,
             contactMail,
             phone,
+            isActive: true,
             createdAt: new Date(),
         });
 
@@ -20,12 +21,32 @@ exports.createSupplier = async (req, res) => {
 
 exports.getSuppliers = async (req, res) => {
     try {
-        const suppliers = await Supplier.find()
+        const suppliers = await Supplier.find();
         console.log(suppliers);
-        
+
         return res.json(suppliers);
     } catch (err) {
         console.error(`Could not get suppliers ${err.message}`);
         return res.status(500).json({ error: `Could not get suppliers ${err.message}` });
+    }
+};
+
+exports.updateById = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { title, contactMail, phone, isActive } = req.body;
+
+        const supplier = await Supplier.findById(id);
+        supplier.title = title;
+        supplier.contactMail = contactMail;
+        supplier.phone = phone;
+        supplier.isActive = isActive;
+        await supplier.save();
+        console.log(supplier);
+
+        return res.status(200).json(supplier);
+    } catch (err) {
+        console.error(`Could not update a supplier ${err.message}`);
+        return res.status(500).json({ error: `Could not update a supplier ${err.message}` });
     }
 };

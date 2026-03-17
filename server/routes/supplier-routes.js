@@ -6,5 +6,5 @@ const supplierController = require("../controllers/supplier-controller");
 
 router.post("/", supplierController.createSupplier);
 router.get("/", supplierController.getSuppliers);
-
+router.put("/:id/", supplierController.updateById);
 module.exports = router;
