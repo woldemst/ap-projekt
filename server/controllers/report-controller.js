@@ -58,3 +58,23 @@ exports.getReportById = async (req, res) => {
         return res.status(500).json({ error: `Could not get report by id ${err.message}` });
     }
 };
+
+exports.updateById = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { title } = req.body;
+
+        const report = await Report.findOneAndUpdate({});
+        report.title = title;
+        report.description = description;
+        report.status = status;
+
+        await report.save();
+        console.log(report);
+
+        return res.status(200).json(report);
+    } catch (err) {
+        console.error(`Could not update a report ${err.message}`);
+        return res.status(500).json({ error: `Could not update a report ${err.message}` });
+    }
+};
