@@ -5,7 +5,7 @@ export type Supplier = {
     title: string;
     contactMail: string;
     phone?: string;
-    note?: string;
+    notes?: string;
     createdAt: string;
     isActive?: boolean;
 };
@@ -13,5 +13,28 @@ export type Supplier = {
 export async function fetchSuppliers(): Promise<Supplier[]> {
     const res = await fetch(`${API_BASE_URL}/api/suppliers`);
     if (!res.ok) throw new Error(`Failed to fetch suppliers: ${res.status}`);
+    return res.json();
+}
+
+export async function fetchSupplierById(id: string): Promise<Supplier> {
+    const res = await fetch(`${API_BASE_URL}/api/suppliers/${id}`);
+    if (!res.ok) throw new Error(`Failed to fetch supplier by id: ${res.status}`);
+    return res.json();
+}
+
+export async function createSupplier(input: {
+    title: string;
+    contactMail: string;
+    phone?: string;
+    notes?: string;
+}): Promise<Supplier> {
+    const res = await fetch(`${API_BASE_URL}/api/suppliers`, {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json",
+        },
+        body: JSON.stringify(input),
+    });
+    if (!res.ok) throw new Error(`Failed to create a supplier: ${res.status}`);
     return res.json();
 }
