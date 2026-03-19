@@ -2,14 +2,14 @@ const Report = require("../models/Report");
 
 exports.createReport = async (req, res) => {
     try {
-        const { title, description, status } = req.body;
-        const { supplierId } = req.params;
+        const { title, description, status, supplierId, createdByEmail } = req.body;
 
         const report = await Report.create({
             title,
             description,
-            status,
             supplierId,
+            status,
+            createdByEmail,
             createdAt: new Date().toISOString(),
         });
 

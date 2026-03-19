@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { View, Text, TextInput, Button, FlatList, Pressable } from "react-native";
+import { View, Text, TextInput, Button, FlatList, Pressable, TouchableOpacity, StyleSheet } from "react-native";
 import { fetchSuppliers, Supplier } from "../api/suppliers";
 import { createReport } from "../api/reports";
 import { useNavigation } from "@react-navigation/core";
@@ -46,15 +46,16 @@ export function CreateReport() {
             setLoading(true);
 
             await createReport({
-                createdByEmail,
                 title,
                 description,
                 supplierId: selectedSupplier._id,
+                createdByEmail,
                 status,
             });
 
             setTitle("");
             setDescription("");
+            setCreatedByEmail("");
             setStatus("OK");
 
             navigation.navigate("Berichte");
@@ -91,12 +92,22 @@ export function CreateReport() {
                 multiline
             />
 
-            <Text style={{ fontWeight: "600" }}>Status</Text>
-            <View style={{ flexDirection: "row", gap: 8 }}>
-                <Button title="OK" onPress={() => setStatus("OK")} />
-                <Button title="DEFECT" onPress={() => setStatus("DEFECT")} />
+            <View style={{ flexDirection: "row", justifyContent: "space-between" }}>
+                <TouchableOpacity
+                    style={[styles.button, status === "OK" ? { backgroundColor: "grey" } : { backgroundColor: "#ccc" }]}
+                    onPress={() => setStatus("OK")}
+                >
+                    <Text>OK</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                    style={[styles.button, status !== "OK" ? { backgroundColor: "grey" } : { backgroundColor: "#ccc" }]}
+                    onPress={() => setStatus("DEFECT")}
+                >
+                    <Text>DEFECT</Text>
+                </TouchableOpacity>
             </View>
-            <Text>Ausgewählt: {status}</Text>
+
+            <Button title="Media" onPress={() => {}} />
 
             <Text style={{ fontWeight: "600" }}>Lieferanten auswählen</Text>
             <Button title="Lieferanten neu laden" onPress={loadSuppliers} />
@@ -132,3 +143,12 @@ export function CreateReport() {
         </View>
     );
 }
+
+const styles = StyleSheet.create({
+    button: {
+        paddingHorizontal: 8,
+        paddingVertical: 4,
+        color: "white",
+        width: "50%",
+    },
+});

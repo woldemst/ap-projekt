@@ -36,7 +36,7 @@ export async function createReport(input: {
     createdByEmail: string;
     status: "OK" | "DEFECT";
 }): Promise<Report> {
-    const res = await fetch(`${API_BASE_URL}/reports`, {
+    const res = await fetch(`${API_BASE_URL}/api/reports/`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(input),
