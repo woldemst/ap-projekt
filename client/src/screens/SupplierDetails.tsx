@@ -29,6 +29,8 @@ export function SupplierDetails({ route }: any) {
             setContactEmail(data.contactEmail || "");
             setNotes(data.notes || "");
             setIsActive(data.isActive || false);
+            setPhone(data.phone || "");
+
         } catch (err: any) {
             setError(err.message ?? "Failed to load supplier");
         } finally {
