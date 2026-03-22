@@ -1,6 +1,17 @@
 import React, { createContext, useContext, useEffect, useState } from "react";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { User } from "../api/auth";
+import { loginUser, User } from "../api/auth";
+
+type AuthContextValue = {
+    user: User | null;
+    token: string | null;
+    isAuthenticated: boolean;
+    loading: boolean;
+    login: (email: string, password: string) => Promise<void>;
+    logout: () => Promise<void>;
+};
+
+const AuthContext = createContext<AuthContextValue | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
     const [user, setUser] = useState<User | null>(null);
@@ -8,9 +19,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const [loading, setLoading] = useState(true);
 
     const isAuthenticated = !!token && !!user;
-    useEffect(() => {}, []);
 
-    async function loadsStoredAuth() {
+    useEffect(() => {
+        loadStoredAuth();
+    }, []);
+
+    async function loadStoredAuth() {
         try {
             const [storedToken, storedUser] = await Promise.all([
                 AsyncStorage.getItem("authToken"),
@@ -21,10 +35,54 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
                 setToken(storedToken);
                 setUser(JSON.parse(storedUser));
             }
+        } catch (err) {
+            console.error("Failed to load auth data", err);
         } finally {
             setLoading(false);
         }
     }
 
-    
+    async function login(email: string, password: string) {
+        const data = await loginUser({ email, password });
+
+        await Promise.all([
+            AsyncStorage.setItem("authToken", data.token),
+            AsyncStorage.setItem("userData", JSON.stringify(data.user)),
+        ]);
+
+        setToken(data.token);
+        setUser(data.user);
+    }
+
+    async function logout() {
+        await Promise.all([AsyncStorage.removeItem("authToken"), AsyncStorage.removeItem("userData")]);
+
+        setToken(null);
+        setUser(null);
+    }
+
+    return (
+        <AuthContext.Provider
+            value={{
+                user,
+                token,
+                isAuthenticated,
+                loading,
+                login,
+                logout,
+            }}
+        >
+            {children}
+        </AuthContext.Provider>
+    );
+}
+
+export function useAuth() {
+    const context = useContext(AuthContext);
+
+    if (!context) {
+        throw new Error("useAuth must be used within AuthProvider");
+    }
+
+    return context;
 }

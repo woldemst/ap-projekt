@@ -4,26 +4,22 @@ export type User = {
     _id: string;
     name: string;
     email: string;
-    password: string;
+    role: "admin" | "employee";
 };
 
-export type AuthProvider = {
-    user: User | null;
-    token: string | null;
-    isAuthenticated: boolean;
-    loading: boolean;
-    login: (email: string, password: string) => Promise<boolean>;
-    logout: () => Promise<void>;
+export type LoginResponse = {
+    token: string;
+    user: User;
 };
 
-export async function loginUser(input: { email: string; password: string }): Promise<User> {
+export async function loginUser(input: { email: string; password: string }): Promise<LoginResponse> {
     const res = await fetch(`${API_BASE_URL}/api/auth/login`, {
         method: "POST",
-        headers: {
-            "Content-Type": "application/json",
-        },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify(input),
     });
-    if (!res.ok) throw new Error(`Failed to login: ${res.status}`);
-    return res.json();
+
+    const data = await res.json().catch(() => null);
+    if (!res.ok) throw new Error(data?.message ?? `Login fehlgeschlagen: ${res.status}`);
+    return data;
 }

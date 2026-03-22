@@ -1,23 +1,28 @@
 import { useState } from "react";
 import { User, loginUser } from "../api/auth";
 import { Button, Text, TextInput, View } from "react-native";
+import { useAuth } from "../context/AuthContext";
 
 export function LoginScreen() {
+    const { login } = useAuth();
+
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
 
-    const [user, setUser] = useState<User>();
-
     const [error, setError] = useState("");
     const [loading, setLoading] = useState(false);
-    async function login() {
+
+    async function handleLogin() {
         try {
+            setError("");
             setLoading(true);
-            setUser(await loginUser({ email, password }));
+
+            await login(email, password);
+
             setEmail("");
             setPassword("");
         } catch (err: any) {
-            setError(err.message ?? "Failed to login");
+            setError(err.message ?? "Login fehlgeschlagen");
         } finally {
             setLoading(false);
         }
@@ -26,23 +31,27 @@ export function LoginScreen() {
     return (
         <>
             <View style={{ padding: 16, gap: 12 }}>
-                {error && <Text style={{ color: "red" }}>{error}</Text>}
+                {error ? <Text style={{ color: "red" }}>{error}</Text> : null}
 
                 <Text style={{ fontWeight: "600" }}>E-Mail</Text>
                 <TextInput
                     value={email}
                     onChangeText={setEmail}
-                    placeholder="example@mail.com"
+                    // placeholder="max.mustermann@firma.de"
+                    autoCapitalize="none"
+                    keyboardType="email-address"
                     style={{ borderWidth: 1, padding: 8 }}
                 />
 
-                <Text style={{ fontWeight: "600" }}>Password</Text>
+                <Text style={{ fontWeight: "600" }}>Passwort</Text>
                 <TextInput
                     value={password}
                     onChangeText={setPassword}
-                    style={{ borderWidth: 1, padding: 8, minHeight: 80 }}
+                    secureTextEntry
+                    style={{ borderWidth: 1, padding: 8 }}
                 />
-                <Button title={loading ? "Einloggen..." : "Einloggen"} onPress={login} disabled={loading} />
+
+                <Button title={loading ? "Einloggen..." : "Einloggen"} onPress={handleLogin} disabled={loading} />
             </View>
         </>
     );
