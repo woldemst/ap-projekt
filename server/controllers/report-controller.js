@@ -1,32 +1,52 @@
 const Report = require("../models/Report");
+const Supplier = require("../models/Supplier");
+const User = require("../models/User");
 const puppeteer = require("puppeteer");
 const path = require("path");
 const fs = require("fs");
 const ejs = require("ejs");
-const Supplier = require("../models/Supplier");
 
 exports.createReport = async (req, res) => {
     try {
-        const { title, description, status, supplierId, images, createdByEmail } = req.body;
+        const { title, description = "", status, supplierId } = req.body;
 
-        if ((!title, !status, !supplierId, !createdByEmail)) return res.status(500);
+        if (!title || !status || !supplierId) {
+            return res.status(400).json({ error: "title, status und supplierId sind erforderlich" });
+        }
+
+        const user = await User.findById(req.user.id);
+        if (!user) {
+            return res.status(401).json({ message: "Benutzer nicht gefunden" });
+        }
+
+        const supplier = await Supplier.findById(supplierId);
+        if (!supplier) {
+            return res.status(404).json({ error: "Supplier not found" });
+        }
+
+        const uploadedImages = Array.isArray(req.files)
+            ? req.files.map((file) => `/uploads/reports/images/${file.filename}`)
+            : [];
 
         const report = await Report.create({
-            title,
-            description,
+            title: title.trim(),
+            description: description.trim(),
             supplierId,
             status,
-            createdByEmail,
-            images,
+            images: uploadedImages,
+            createdByUserId: user._id,
+            createdByName: user.name,
+            createdByEmail: user.email,
             createdAt: new Date().toISOString(),
         });
 
-        return res.json(report);
+        return res.status(201).json(report);
     } catch (err) {
         console.error(`Could not create a report ${err.message}`);
         return res.status(500).json({ error: `Could not create a report ${err.message}` });
     }
 };
+
 
 exports.getAllBySupplierId = async (req, res) => {
     try {

@@ -1,3 +1,4 @@
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import { API_BASE_URL } from "../config/api";
 import { Supplier } from "./suppliers";
 
@@ -5,12 +6,15 @@ export type Report = {
     _id: string;
     title: string;
     description?: string;
-    supplierId: string | Supplier; // populated object
+    supplierId: string | Supplier;
+    createdByUserId?: string;
+    createdByName?: string;
     createdByEmail: string;
     updatedByEmail?: string;
     updateNotes?: string;
     status: "OK" | "DEFECT";
     createdAt: string;
+    images?: string[];
 };
 
 export async function fetchReports(): Promise<Report[]> {
@@ -47,15 +51,17 @@ export async function updateReport(
         updatedByEmail?: string;
         status?: "OK" | "DEFECT";
     },
-): Promise<Supplier> {
+): Promise<Report> {
     const res = await fetch(`${API_BASE_URL}/api/reports/${id}`, {
         method: "PATCH",
-        headers: { "Content-Type": "application/json" },
+        headers: await getAuthHeaders(),
         body: JSON.stringify(input),
     });
 
     const data = await res.json().catch(() => null);
-    if (!res.ok) throw new Error(data?.error ?? `Failed to update report: ${res.status}`);
+
+    if (!res.ok) throw new Error(data?.message ?? data?.error ?? `Failed to update report: ${res.status}`);
+
     return data;
 }
 
@@ -63,15 +69,27 @@ export async function createReport(input: {
     title: string;
     description?: string;
     supplierId: string;
-    createdByEmail: string;
     status: "OK" | "DEFECT";
-    images: string[];
+    images?: string[];
 }): Promise<Report> {
-    const res = await fetch(`${API_BASE_URL}/api/reports/`, {
+    const res = await fetch(`${API_BASE_URL}/api/reports`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: await getAuthHeaders(),
         body: JSON.stringify(input),
     });
-    if (!res.ok) throw new Error(`Failed to create report: ${res.status}`);
-    return res.json();
+
+    const data = await res.json().catch(() => null);
+
+    if (!res.ok) throw new Error(data?.message ?? data?.error ?? `Failed to create report: ${res.status}`);
+
+    return data;
+}
+
+async function getAuthHeaders() {
+    const token = await AsyncStorage.getItem("authToken");
+
+    return {
+        "Content-Type": "application/json",
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    };
 }

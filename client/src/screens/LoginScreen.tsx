@@ -1,11 +1,9 @@
 import { useState } from "react";
 import { Button, Text, TextInput, View } from "react-native";
 import { useAuth } from "../context/AuthContext";
-import { useNavigation } from "@react-navigation/native";
 
 export function LoginScreen() {
     const { login } = useAuth();
-    const navigation = useNavigation<any>();
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
 
@@ -21,7 +19,6 @@ export function LoginScreen() {
 
             setEmail("");
             setPassword("");
-            navigation.navigate("Home");
         } catch (err: any) {
             setError(err.message ?? "Login fehlgeschlagen");
         } finally {

@@ -67,37 +67,43 @@ export function SuppliersScreen() {
 
     return (
         <View style={{ padding: 16, gap: 12 }}>
-            <View style={{ paddingVertical: 8, gap: 8 }}>
-                <Text style={{ fontWeight: "600" }}>Lieferant erstellen</Text>
-                <TextInput
-                    placeholder="Name"
-                    value={title}
-                    onChangeText={setTitle}
-                    style={{ borderWidth: 1, padding: 8, borderRadius: 4 }}
-                />
-                <TextInput
-                    placeholder="Kontakt-E-Mail"
-                    value={contactEmail}
-                    onChangeText={setContactEmail}
-                    style={{ borderWidth: 1, padding: 8, borderRadius: 4 }}
-                />
-                <TextInput
-                    value={phone}
-                    onChangeText={setPhone}
-                    placeholder="Telefon"
-                    keyboardType="numeric"
-                    style={{ borderWidth: 1, padding: 8, borderRadius: 4 }}
-                />
-                <TextInput
-                    placeholder="Notizen"
-                    value={notes}
-                    onChangeText={setNotes}
-                    style={{ borderWidth: 1, padding: 8, borderRadius: 4 }}
-                    multiline
-                    numberOfLines={3}
-                />
-                <Button title={saving ? "Speichern..." : "Lieferant hinzufügen"} onPress={onCreate} />
-            </View>
+            {user?.role === "admin" ? (
+                <View style={{ paddingVertical: 8, gap: 8 }}>
+                    <Text style={{ fontWeight: "600" }}>Lieferant erstellen</Text>
+                    <TextInput
+                        placeholder="Name"
+                        value={title}
+                        onChangeText={setTitle}
+                        style={{ borderWidth: 1, padding: 8, borderRadius: 4 }}
+                    />
+                    <TextInput
+                        placeholder="Kontakt-E-Mail"
+                        value={contactEmail}
+                        onChangeText={setContactEmail}
+                        style={{ borderWidth: 1, padding: 8, borderRadius: 4 }}
+                    />
+                    <TextInput
+                        value={phone}
+                        onChangeText={setPhone}
+                        placeholder="Telefon"
+                        keyboardType="numeric"
+                        style={{ borderWidth: 1, padding: 8, borderRadius: 4 }}
+                    />
+                    <TextInput
+                        placeholder="Notizen"
+                        value={notes}
+                        onChangeText={setNotes}
+                        style={{ borderWidth: 1, padding: 8, borderRadius: 4 }}
+                        multiline
+                        numberOfLines={3}
+                    />
+                    <Button
+                        title={saving ? "Speichern..." : "Lieferant hinzufügen"}
+                        onPress={onCreate}
+                        disabled={saving}
+                    />
+                </View>
+            ) : null}
             <Text style={{ fontWeight: "600" }}>Lieferanten</Text>
 
             <FlatList
