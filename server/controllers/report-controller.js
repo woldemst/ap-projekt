@@ -24,9 +24,7 @@ exports.createReport = async (req, res) => {
             return res.status(404).json({ error: "Supplier not found" });
         }
 
-        const uploadedImages = Array.isArray(req.files)
-            ? req.files.map((file) => `/uploads/reports/images/${file.filename}`)
-            : [];
+        const uploadedImages = Array.isArray(req.files) ? req.files.map((file) => `/uploads/reports/images/${file.filename}`) : [];
 
         const report = await Report.create({
             title: title.trim(),
@@ -46,7 +44,6 @@ exports.createReport = async (req, res) => {
         return res.status(500).json({ error: `Could not create a report ${err.message}` });
     }
 };
-
 
 exports.getAllBySupplierId = async (req, res) => {
     try {
@@ -135,21 +132,29 @@ exports.deleteById = async (req, res) => {
 exports.generatePdfById = async (req, res) => {
     try {
         const { id } = req.params;
+
         const report = await Report.findById(id);
-        if (!report) return res.status(404).json({ error: "Report not found" });
+        if (!report) {
+            return res.status(404).json({ error: "Report not found" });
+        }
 
         const supplier = await Supplier.findById(report.supplierId);
-        if (!supplier) return res.status(404).json({ error: "Supplier not found" });
+        if (!supplier) {
+            return res.status(404).json({ error: "Supplier not found" });
+        }
 
         const templatePath = path.join(__dirname, "../templates/report.ejs");
 
         const html = await ejs.renderFile(templatePath, {
             report,
             supplier,
+            path,
         });
 
-        const pdfDir = path.join(__dirname, `../uploads/reports/${report._id}/pdfs/`);
-        if (!fs.existsSync(pdfDir)) fs.mkdirSync(pdfDir, { recursive: true });
+        const pdfDir = path.join(__dirname, `../uploads/reports/${report._id}/pdfs`);
+        if (!fs.existsSync(pdfDir)) {
+            fs.mkdirSync(pdfDir, { recursive: true });
+        }
 
         const pdfPath = path.join(pdfDir, `report_${report._id}.pdf`);
 
@@ -160,13 +165,22 @@ exports.generatePdfById = async (req, res) => {
 
         const page = await browser.newPage();
         await page.setContent(html, { waitUntil: "networkidle0" });
-        const pdf = await page.pdf({ path: pdfPath, format: "A4", printBackground: true });
+        await page.pdf({
+            path: pdfPath,
+            format: "A4",
+            printBackground: true,
+            margin: {
+                top: "20mm",
+                right: "15mm",
+                bottom: "20mm",
+                left: "15mm",
+            },
+        });
         await browser.close();
 
-        res.download(pdfPath);
-        res.send(pdf);
+        return res.download(pdfPath, `report_${report._id}.pdf`);
     } catch (err) {
         console.error(err);
-        res.status(500).json({ error: "could not create PDF" });
+        return res.status(500).json({ error: "could not create PDF" });
     }
 };

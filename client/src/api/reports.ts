@@ -35,10 +35,10 @@ export async function fetchReportsById(id: string): Promise<Report> {
     return res.json();
 }
 
-export async function getGeneratedPDF(id: string): Promise<Report> {
+export async function getGeneratedPDF(id: string): Promise<Response> {
     const res = await fetch(`${API_BASE_URL}/api/reports/${id}/pdf`, { headers: await getAuthHeaders() });
-    if (!res.ok) throw new Error(`Failed to fetch report's PDF: ${res.status}`);
-    return res.json();
+    if (!res.ok) throw new Error(`Failed to fetch report PDF: ${res.status}`);
+    return res;
 }
 
 export async function updateReport(
@@ -54,13 +54,15 @@ export async function updateReport(
 ): Promise<Report> {
     const res = await fetch(`${API_BASE_URL}/api/reports/${id}`, {
         method: "PATCH",
-        headers: { "Content-Type": "application/json" },
+        headers: await getJsonAuthHeaders(),
         body: JSON.stringify(input),
     });
 
     const data = await res.json().catch(() => null);
 
-    if (!res.ok) throw new Error(data?.message ?? data?.error ?? `Failed to update report: ${res.status}`);
+    if (!res.ok) {
+        throw new Error(data?.message ?? data?.error ?? `Failed to update report: ${res.status}`);
+    }
 
     return data;
 }
@@ -104,8 +106,13 @@ async function getAuthHeaders() {
     const token = await AsyncStorage.getItem("authToken");
 
     return {
-        "Content-Type": "application/json",
         ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    };
+}
+async function getJsonAuthHeaders() {
+    return {
+        "Content-Type": "application/json",
+        ...(await getAuthHeaders()),
     };
 }
 
@@ -113,9 +120,9 @@ async function getAuthToken() {
     return AsyncStorage.getItem("authToken");
 }
 
-function getImageName(uri: string, index: string) {
+function getImageName(uri: string, index: number) {
     const cleanUri = uri.split("?")[0];
-    const extension = cleanUri.includes(".") ? cleanUri.substring(cleanUri.lastIndexOf(".;")) : ".jpg";
+    const extension = cleanUri.includes(".") ? cleanUri.substring(cleanUri.lastIndexOf(".")) : ".jpg";
 
     return `report_image_${index}${extension}`;
 }

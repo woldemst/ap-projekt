@@ -193,8 +193,8 @@ export function CreateReport() {
                     </TouchableOpacity>
                 </View>
                 {/* <Text style={{ fontWeight: "600" }}>Fotos</Text> */}
-                <Button title="Medien" onPress={takePhoto} />
-                <Button title="Bild aus Galerie" onPress={pickFromLibrary} />
+                <Button title="Foto machen" onPress={takePhoto} />
+                <Button title="Bild aus Galerie wählen" onPress={pickFromLibrary} />
 
                 {images.length > 0 ? (
                     <FlatList
