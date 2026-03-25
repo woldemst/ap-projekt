@@ -43,6 +43,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
 
     async function login(email: string, password: string) {
+        
         const data = await loginUser({ email, password });
 
         await Promise.all([

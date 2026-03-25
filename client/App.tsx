@@ -12,6 +12,7 @@ import { LoginScreen } from "./src/screens/LoginScreen";
 function HomeScreen() {
     const navigation = useNavigation<any>();
     const { logout, user } = useAuth();
+
     return (
         <View style={{ padding: 16, gap: 12 }}>
             <Button title={"Lieferanten"} onPress={() => navigation.navigate("SuppliersScreen")} />
@@ -47,27 +48,11 @@ export function RootLayout() {
             ) : (
                 <Stack.Navigator>
                     <Stack.Screen name="Home" component={HomeScreen} />
-                    <Stack.Screen
-                        name="SuppliersScreen"
-                        options={{ title: "Lieferanten" }}
-                        component={SuppliersScreen}
-                    />
-                    <Stack.Screen
-                        name="SupplierDatails"
-                        options={{ title: "Lieferantendetails" }}
-                        component={SupplierDetails}
-                    />
+                    <Stack.Screen name="SuppliersScreen" options={{ title: "Lieferanten" }} component={SuppliersScreen} />
+                    <Stack.Screen name="SupplierDatails" options={{ title: "Lieferantendetails" }} component={SupplierDetails} />
                     <Stack.Screen name="ReportsScreen" options={{ title: "Berichte" }} component={ReportsScreen} />
-                    <Stack.Screen
-                        name="ReportDetails"
-                        options={{ title: "Berichtsdetails" }}
-                        component={ReportDetails}
-                    />
-                    <Stack.Screen
-                        name="CreateReport"
-                        options={{ title: "Bericht erstellen" }}
-                        component={CreateReport}
-                    />
+                    <Stack.Screen name="ReportDetails" options={{ title: "Berichtsdetails" }} component={ReportDetails} />
+                    <Stack.Screen name="CreateReport" options={{ title: "Bericht erstellen" }} component={CreateReport} />
                 </Stack.Navigator>
             )}
         </NavigationContainer>

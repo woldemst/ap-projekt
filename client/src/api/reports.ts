@@ -41,6 +41,15 @@ export async function getGeneratedPDF(id: string): Promise<Response> {
     return res;
 }
 
+export async function deleteReport(id: string): Promise<Report> {
+    const res = await fetch(`${API_BASE_URL}/api/reports/${id}/delete`, {
+        method: "DELETE",
+        headers: await getAuthHeaders(),
+    });
+    if (!res.ok) throw new Error(`Failed to fetch reports by id: ${res.status}`);
+    return res.json();
+}
+
 export async function updateReport(
     id: string,
     input: {

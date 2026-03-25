@@ -10,6 +10,7 @@ import {
     StyleSheet,
     Alert,
     ScrollView,
+    Platform,
 } from "react-native";
 import { useFocusEffect, useNavigation } from "@react-navigation/native";
 import * as ImagePicker from "expo-image-picker";
@@ -69,6 +70,7 @@ export function CreateReport() {
             mediaTypes: ["images"],
             allowsEditing: true,
             quality: 0.8,
+            // allowsMultipleSelection: true,
         });
 
         if (!result.canceled && result.assets?.[0].uri) {
@@ -79,6 +81,7 @@ export function CreateReport() {
     function removeImage(uri: string) {
         setImages((current) => current.filter((imageUri) => imageUri != uri));
     }
+
     async function takePhoto() {
         const permission = await ImagePicker.requestCameraPermissionsAsync();
 
@@ -101,6 +104,16 @@ export function CreateReport() {
         if (!result.canceled && result.assets?.[0].uri) {
             setImages((current) => [...current, result.assets[0].uri]);
         }
+    }
+
+    function chooseMediaOption() {
+        Alert.alert("Medien auswählen", "Ein neues Foto aufnehmen oder aus der Galerie wählen?", [
+            {
+                text: "Aufnehmen",
+                onPress: () => takePhoto(),
+            },
+            { text: "Galerie", onPress: () => pickFromLibrary() },
+        ]);
     }
 
     async function onCreate() {
@@ -133,9 +146,9 @@ export function CreateReport() {
             setStatus("OK");
             setImages([]);
 
-            Alert.alert("Erfolg", "Der Prüfbericht wurde erstellt.", [
-                { text: "OK", onPress: () => navigation.navigate("ReportsScreen") },
-            ]);
+            if (Platform.OS === "web") navigation.navigate("ReportsScreen");
+
+            Alert.alert("Erfolg", "Der Prüfbericht wurde erstellt.", [{ text: "OK", onPress: () => navigation.navigate("ReportsScreen") }]);
         } catch (err: any) {
             setError(err.message ?? "Bericht konnte nicht erstellt werden");
         } finally {
@@ -175,26 +188,28 @@ export function CreateReport() {
                     <TouchableOpacity
                         style={[
                             styles.button,
+                            { width: "50%" },
                             status === "OK" ? { backgroundColor: "grey" } : { backgroundColor: "#ccc" },
                         ]}
                         onPress={() => setStatus("OK")}
                     >
-                        <Text>OK</Text>
+                        <Text style={styles.buttonText}>OK</Text>
                     </TouchableOpacity>
 
                     <TouchableOpacity
                         style={[
                             styles.button,
+                            { width: "50%" },
                             status === "DEFECT" ? { backgroundColor: "grey" } : { backgroundColor: "#ccc" },
                         ]}
                         onPress={() => setStatus("DEFECT")}
                     >
-                        <Text>DEFECT</Text>
+                        <Text style={styles.buttonText}>DEFECT</Text>
                     </TouchableOpacity>
                 </View>
-                {/* <Text style={{ fontWeight: "600" }}>Fotos</Text> */}
-                <Button title="Foto machen" onPress={takePhoto} />
-                <Button title="Bild aus Galerie wählen" onPress={pickFromLibrary} />
+
+                {Platform.OS !== "web" && <Button title="Medien" onPress={chooseMediaOption} />}
+                {Platform.OS === "web" && <Button title="Bild aus Galerie wählen" onPress={pickFromLibrary} />}
 
                 {images.length > 0 ? (
                     <FlatList
@@ -243,7 +258,6 @@ export function CreateReport() {
                                 ]}
                             >
                                 <Text>{item.title}</Text>
-                                {!isSelectable ? <Text>Inaktiv</Text> : null}
                             </Pressable>
                         );
                     }}
@@ -251,7 +265,13 @@ export function CreateReport() {
 
                 <Text>Lieferant: {selectedSupplier ? selectedSupplier.title : "Keiner ausgewählt"}</Text>
 
-                <Button title={loading ? "Speichern..." : "Bericht speichern"} onPress={onCreate} disabled={loading} />
+                <TouchableOpacity
+                    style={[styles.button, { backgroundColor: "#1e90ff", marginBottom: 32 }]}
+                    onPress={onCreate}
+                    disabled={loading}
+                >
+                    <Text style={styles.buttonText}>{loading ? "Speichern..." : "Bericht speichern"}</Text>
+                </TouchableOpacity>
             </View>
         </ScrollView>
     );
@@ -260,7 +280,14 @@ export function CreateReport() {
 const styles = StyleSheet.create({
     button: {
         paddingHorizontal: 8,
-        paddingVertical: 4,
-        width: "50%",
+        paddingVertical: 8,
+        borderRadius: 2,
+        fontSize: 14,
+    },
+    buttonText: {
+        textAlign: "center",
+        color: "#fff",
+        fontSize: 16,
+        fontWeight: 500,
     },
 });

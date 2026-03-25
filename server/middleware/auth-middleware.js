@@ -17,6 +17,7 @@ exports.requireAuth = (req, res, next) => {
         return res.status(401).json({ message: "Token ungültig oder abgelaufen" });
     }
 };
+
 exports.requireRole = (...allowedRoles) => {
     return (req, res, next) => {
         if (!req.user || !allowedRoles.includes(req.user.role)) {

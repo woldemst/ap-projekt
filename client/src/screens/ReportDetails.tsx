@@ -1,14 +1,4 @@
-import {
-    Button,
-    Text,
-    TextInput,
-    View,
-    StyleSheet,
-    TouchableOpacity,
-    Linking,
-    FlatList,
-    Pressable,
-} from "react-native";
+import { Button, Text, TextInput, View, StyleSheet, TouchableOpacity, Linking, FlatList, Pressable, Alert, Platform } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import { useEffect, useState } from "react";
 import * as Print from "expo-print";
@@ -16,13 +6,13 @@ import * as Sharing from "expo-sharing";
 import { File, Directory, Paths } from "expo-file-system";
 import { Image } from "expo-image";
 
-import { Report, fetchReportsById, getGeneratedPDF, updateReport } from "../api/reports";
+import { Report, deleteReport, fetchReportsById, getGeneratedPDF, updateReport } from "../api/reports";
 import { fetchSuppliers, Supplier } from "../api/suppliers";
 import { API_BASE_URL } from "../config/api";
 import { useAuth } from "../context/AuthContext";
 
 export function ReportDetails({ route }: any) {
-    const navigation = useNavigation();
+    const navigation = useNavigation<any>();
     const { reportId, supplierId } = route.params;
     const { user } = useAuth();
 
@@ -32,6 +22,7 @@ export function ReportDetails({ route }: any) {
     const [status, setStatus] = useState<"OK" | "DEFECT">();
 
     const [pdf, setPdf] = useState();
+    const [images, setImages] = useState<string[] | null>([]);
 
     const [edit, setEdit] = useState(false);
     const [loading, setLoading] = useState(false);
@@ -78,7 +69,7 @@ export function ReportDetails({ route }: any) {
                 return freshSelectedSupplier?.isActive === true ? freshSelectedSupplier : null;
             });
         } catch (err: any) {
-            setError(err.message ?? "Failed to load suppliers");
+            setError(err.message ?? "Lieferanten konnten nicht geladen werden");
         }
     }
 
@@ -133,6 +124,33 @@ export function ReportDetails({ route }: any) {
         }
     }
 
+    async function deleteReportHandle(reportId: string) {
+        try {
+            setError(null);
+            if (Platform.OS === "web") {
+                await deleteReport(reportId);
+                navigation.navigate("ReportsScreen");
+            } else {
+                Alert.alert("Bericht löschen", "Möchten Sie diesen Bericht wirklish löschen?", [
+                    {
+                        text: "Ablehnen",
+                        onPress: () => console.log("Cancel Pressed"),
+                        style: "cancel",
+                    },
+                    {
+                        text: "Löschen",
+                        onPress: async () => {
+                            await deleteReport(reportId);
+                            navigation.navigate("ReportsScreen");
+                        },
+                    },
+                ]);
+            }
+        } catch (err: any) {
+            setError(err.message ?? "Löschen fehlgeschlagen");
+        }
+    }
+
     useEffect(() => {
         load();
         loadSuppliers();
@@ -175,41 +193,46 @@ export function ReportDetails({ route }: any) {
                         <TouchableOpacity
                             style={[
                                 styles.button,
+                                { width: "50%" },
                                 status === "OK" ? { backgroundColor: "grey" } : { backgroundColor: "#ccc" },
                             ]}
                             onPress={() => setStatus("OK")}
                             disabled={!edit}
                         >
-                            <Text>OK</Text>
+                            <Text style={styles.buttonText}>OK</Text>
                         </TouchableOpacity>
                         <TouchableOpacity
                             style={[
                                 styles.button,
+                                { width: "50%" },
                                 status !== "OK" ? { backgroundColor: "grey" } : { backgroundColor: "#ccc" },
                             ]}
                             onPress={() => setStatus("DEFECT")}
                             disabled={!edit}
                         >
-                            <Text>DEFECT</Text>
+                            <Text style={styles.buttonText}>DEFECT</Text>
                         </TouchableOpacity>
                     </View>
-                    {user?.role === "admin" && !edit && <Button title={"Bearbeiten"} onPress={() => setEdit(true)} />}
+                    {user?.role === "admin" && !edit && (
+                        <TouchableOpacity onPress={() => setEdit(true)} style={[styles.button, { backgroundColor: "#1e90ff" }]}>
+                            <Text style={styles.buttonText}>Bearbeiten</Text>
+                        </TouchableOpacity>
+                    )}
                     {user?.role === "admin" && edit && (
-                        <Button
-                            title={saving ? "Speichern..." : "Aktualisieren"}
-                            onPress={updateReportHandle}
-                            disabled={saving}
-                        />
+                        <Button title={saving ? "Speichern..." : "Aktualisieren"} onPress={updateReportHandle} disabled={saving} />
                     )}
                     <Button title="PDF erstellen" onPress={generatePDF} />
-                    {/* <View style={{ padding: 16 }}>
-                        <Image
-                            style={{}}
-                            source="https://picsum.photos/seed/696/3000/2000"
-                            contentFit="cover"
-                            transition={1000}
-                        />
-                    </View> */}
+                    {user?.role === "admin" && !edit && (
+                        <TouchableOpacity onPress={() => deleteReportHandle(reportId)} style={[styles.button, { backgroundColor: "red" }]}>
+                            <Text style={styles.buttonText}>Löschen</Text>
+                        </TouchableOpacity>
+                    )}
+                    {report?.images &&
+                        report.images.map((img, index) => {
+                            const uri = `${API_BASE_URL}${img}`;
+                            console.log(uri);
+                            return <Image key={index} source={{ uri }} />;
+                        })}
                 </>
             ) : null}
 
@@ -272,8 +295,14 @@ export function ReportDetails({ route }: any) {
 const styles = StyleSheet.create({
     button: {
         paddingHorizontal: 8,
-        paddingVertical: 4,
-        color: "white",
-        width: "50%",
+        paddingVertical: 8,
+        borderRadius: 2,
+        fontSize: 14,
+    },
+    buttonText: {
+        textAlign: "center",
+        color: "#fff",
+        fontSize: 16,
+        fontWeight: 500,
     },
 });

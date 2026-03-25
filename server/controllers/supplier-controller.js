@@ -86,12 +86,12 @@ exports.generatePdfById = async (req, res) => {
         if (!supplier) return res.status(404).json({ error: "Supplier not found" });
 
         const reports = await Report.find({ supplierId: id });
-        
+
         const templatePath = path.join(__dirname, "../templates/supplier.ejs");
 
         const html = await ejs.renderFile(templatePath, {
             supplier,
-            reports
+            reports,
         });
 
         const pdfDir = path.join(__dirname, `../uploads/supplier/${supplier._id}/pdfs/`);
@@ -110,7 +110,6 @@ exports.generatePdfById = async (req, res) => {
         await browser.close();
 
         res.download(pdfPath);
-        res.send(pdf);
     } catch (err) {
         console.error(err);
         res.status(500).json({ error: "could not create PDF" });

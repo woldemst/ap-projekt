@@ -1,7 +1,11 @@
-import { Button, Text, TextInput, View, StyleSheet, TouchableOpacity } from "react-native";
+import { Button, Text, TextInput, View, StyleSheet, TouchableOpacity, Platform } from "react-native";
+import { File, Directory, Paths } from "expo-file-system";
 import { useNavigation } from "@react-navigation/native";
-import { Supplier, fetchSupplierById, updateSupplier } from "../api/suppliers";
 import { useEffect, useState } from "react";
+import * as FileSystem from "expo-file-system";
+import * as Linking from "expo-linking";
+
+import { Supplier, fetchSupplierById, getGeneratedPDF, updateSupplier } from "../api/suppliers";
 import { useAuth } from "../context/AuthContext";
 
 export function SupplierDetails({ route }: any) {
@@ -21,6 +25,13 @@ export function SupplierDetails({ route }: any) {
     const [loading, setLoading] = useState(false);
     const [saving, setSaving] = useState(false);
     const [error, setError] = useState<string | null>(null);
+
+    // PDF generating options
+
+    const [pdfOptions, setPdfOptions] = useState(false);
+    const [from, setFrom] = useState<string>("");
+    const [to, setTo] = useState<string>("");
+    const [generating, setGenerating] = useState(false);
 
     async function load() {
         try {
@@ -67,9 +78,36 @@ export function SupplierDetails({ route }: any) {
         }
     }
 
-    function generatePDF() {
+    async function openPDFInNativeViewer(uri: string) {
         try {
-        } catch (err) {}
+            if (Platform.OS === "android") {
+                const contentUri = await FileSystem.getContentUriAsync(uri);
+                await Linking.openURL(contentUri);
+                return;
+            }
+            await Linking.openURL(uri);
+        } catch (err: any) {}
+    }
+
+    async function generatePDFHandle() {
+        try {
+            setError(null);
+            setGenerating(true);
+            const res = await getGeneratedPDF(supplierId, { from, to });
+            if (!res.ok) throw new Error("Failed to generate PDF");
+
+            const fileName = `supplier_${supplierId}.pdf`;
+            const localFile = new File(Paths.cache, fileName);
+
+            const bytes = await res.arrayBuffer();
+            localFile.write(new Uint8Array(bytes));
+
+            await openPDFInNativeViewer(localFile.uri);
+        } catch (err: any) {
+            setError(err.message ?? "Failed to generate PDFs");
+        } finally {
+            setGenerating(false);
+        }
     }
 
     useEffect(() => {
@@ -125,20 +163,14 @@ export function SupplierDetails({ route }: any) {
 
                     <View style={{ flexDirection: "row", justifyContent: "space-between" }}>
                         <TouchableOpacity
-                            style={[
-                                styles.button,
-                                isActive ? { backgroundColor: "grey" } : { backgroundColor: "#ccc" },
-                            ]}
+                            style={[styles.button, isActive ? { backgroundColor: "grey" } : { backgroundColor: "#ccc" }]}
                             onPress={() => setIsActive(true)}
                             disabled={!edit}
                         >
                             <Text>ACTIV</Text>
                         </TouchableOpacity>
                         <TouchableOpacity
-                            style={[
-                                styles.button,
-                                isActive ? { backgroundColor: "#ccc" } : { backgroundColor: "grey" },
-                            ]}
+                            style={[styles.button, isActive ? { backgroundColor: "#ccc" } : { backgroundColor: "grey" }]}
                             onPress={() => setIsActive(false)}
                             disabled={!edit}
                         >
@@ -150,7 +182,27 @@ export function SupplierDetails({ route }: any) {
                         <Button title={saving ? "Speichern..." : "Aktualisieren"} onPress={onSave} disabled={saving} />
                     )}
 
-                    <Button title="PDF erstellen" onPress={generatePDF} />
+                    {!pdfOptions ? (
+                        <Button title="PDF erstellen" onPress={() => setPdfOptions(true)} />
+                    ) : (
+                        <>
+                            <View style={{ borderWidth: 1, gap: 12, padding: 8, flexDirection: "row" }}>
+                                <TextInput
+                                    value={from}
+                                    onChangeText={setFrom}
+                                    placeholder="Von"
+                                    style={{ borderWidth: 1, padding: 8, borderRadius: 4, width: "48%" }}
+                                />
+                                <TextInput
+                                    value={to}
+                                    onChangeText={setTo}
+                                    placeholder="Bis"
+                                    style={{ borderWidth: 1, padding: 8, borderRadius: 4, width: "48%" }}
+                                />
+                            </View>
+                            <Button title={generating ? "Generiere..." : "PDF generieren"} onPress={generatePDFHandle} />
+                        </>
+                    )}
                 </>
             ) : null}
         </View>

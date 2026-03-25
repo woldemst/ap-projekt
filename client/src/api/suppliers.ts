@@ -1,3 +1,4 @@
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import { API_BASE_URL } from "../config/api";
 
 export type Supplier = {
@@ -11,15 +12,21 @@ export type Supplier = {
 };
 
 export async function fetchSuppliers(): Promise<Supplier[]> {
-    const res = await fetch(`${API_BASE_URL}/api/suppliers`);
+    const res = await fetch(`${API_BASE_URL}/api/suppliers`, { headers: await getAuthHeaders() });
     if (!res.ok) throw new Error(`Failed to fetch suppliers: ${res.status}`);
     return res.json();
 }
 
 export async function fetchSupplierById(id: string): Promise<Supplier> {
-    const res = await fetch(`${API_BASE_URL}/api/suppliers/${id}`);
+    const res = await fetch(`${API_BASE_URL}/api/suppliers/${id}`, { headers: await getAuthHeaders() });
     if (!res.ok) throw new Error(`Failed to fetch supplier by id: ${res.status}`);
     return res.json();
+}
+
+export async function getGeneratedPDF(id: string, input: { from: string; to: string }): Promise<Response> {
+    const res = await fetch(`${API_BASE_URL}/api/suppliers/${id}/pdf?${input.from}&${input.to}`, { headers: await getAuthHeaders() });
+    if (!res.ok) throw new Error(`Failed to fetch report PDF: ${res.status}`);
+    return res;
 }
 
 export async function updateSupplier(
@@ -28,7 +35,7 @@ export async function updateSupplier(
 ): Promise<Supplier> {
     const res = await fetch(`${API_BASE_URL}/api/suppliers/${id}`, {
         method: "PATCH",
-        headers: { "Content-Type": "application/json" },
+        headers: await getJsonAuthHeaders(),
         body: JSON.stringify(input),
     });
 
@@ -37,17 +44,26 @@ export async function updateSupplier(
     return data;
 }
 
-export async function createSupplier(input: {
-    title: string;
-    contactEmail: string;
-    phone?: string;
-    notes?: string;
-}): Promise<Supplier> {
+export async function createSupplier(input: { title: string; contactEmail: string; phone?: string; notes?: string }): Promise<Supplier> {
     const res = await fetch(`${API_BASE_URL}/api/suppliers`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: await getAuthHeaders(),
         body: JSON.stringify(input),
     });
     if (!res.ok) throw new Error(`Failed to create a supplier: ${res.status}`);
     return res.json();
+}
+
+async function getAuthHeaders() {
+    const token = await AsyncStorage.getItem("authToken");
+
+    return {
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    };
+}
+async function getJsonAuthHeaders() {
+    return {
+        "Content-Type": "application/json",
+        ...(await getAuthHeaders()),
+    };
 }
