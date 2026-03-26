@@ -136,7 +136,7 @@
                                 <%= r.createdAt ? new Date(r.createdAt).toLocaleString("de-DE") : "" %>
                             </td>
                             <td>
-                                <%= r.status === "DEFECT" ? "Defekt" : "OK" %>
+                                <%= r.status==="DEFECT" ? "Defekt" : "OK" %>
                             </td>
                         </tr>
                         <% }) %>
@@ -146,6 +146,31 @@
                 <p>Keine Berichte vorhanden.</p>
                 <% } %>
     </div>
+
+    <div class="section">
+        <h2>Zusammenfassung</h2>
+        <table>
+            <tr>
+                <th>Zeitraum</th>
+                <td>
+                    <%= from %> bis <%= to %>
+                </td>
+            </tr>
+            <tr>
+                <th>Berichte gesamt</th>
+                <td>
+                    <%= summary.totalReports %>
+                </td>
+            </tr>
+            <tr>
+                <th>Davon defekt</th>
+                <td>
+                    <%= summary.defectCount %>
+                </td>
+            </tr>
+        </table>
+    </div>
+
 
     <footer>Erstellt am <%= new Date().toLocaleString("de-DE") %>
     </footer>

@@ -22,8 +22,13 @@ export async function fetchSupplierById(id: string): Promise<Supplier> {
     if (!res.ok) throw new Error(`Failed to fetch supplier by id: ${res.status}`);
     return res.json();
 }
+export async function setActivityById(id: string, state: boolean): Promise<Supplier> {
+    const res = await fetch(`${API_BASE_URL}/api/suppliers/${id}/activity?activ=${state}`, { headers: await getAuthHeaders() });
+    if (!res.ok) throw new Error(`Failed to change activity of supplier: ${res.status}`);
+    return res.json();
+}
 
-export async function getGeneratedPDF(id: string, input: { from: string; to: string }): Promise<Response> {
+export async function getGeneratedPDF(id: string, input: { from: any; to: any }): Promise<Response> {
     const query = `from=${encodeURIComponent(input.from)}&to=${encodeURIComponent(input.to)}`;
     const res = await fetch(`${API_BASE_URL}/api/suppliers/${id}/pdf?${query}`, { headers: await getAuthHeaders() });
     if (!res.ok) throw new Error(`Failed to fetch supplier PDF: ${res.status}`);

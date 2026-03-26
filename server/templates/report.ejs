@@ -73,6 +73,22 @@
             word-break: break-all;
         }
 
+        Image grid ----- */ .image-grid {
+            margin-top: 15px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+            justify-content: flex-start;
+        }
+
+        .image-grid img {
+            width: 150px;
+            height: 150px;
+            object-fit: cover;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+        }
+
         footer {
             position: fixed;
             bottom: 20px;
@@ -133,19 +149,24 @@
         </table>
     </div>
 
-    <div class="section">
-        <h2>Medien</h2>
-        <% if (report .images && report.images.length > 0) { %>
-            <p><%= report.images.length %> Bild(er) zum Bericht gespeichert.</p>
-        <% } else { %>
-            <p>Keine Bilder vorhanden.</p>
-        <% } %>
-    </div>
 
 
-    <footer>
-        Erstellt am <%= new Date().toLocaleString("de-DE") %>
-    </footer>
+
+    <% if (report.images && Array.isArray(report.images) && report.images.length) { %>
+        <% report.images.slice(0, 6).forEach(function (imgPath) { const fullSrc=imgPath.startsWith("http") ? imgPath :
+            baseUrl.replace(/\/$/, "" ) + imgPath; // imgPath is "/uploads/..." %>
+            <img src="<%= fullSrc %>" alt="Report Image" />
+            <% }); %>
+                <% } else { %>
+                    <% for (let i=1; i <=6; i++) { %>
+                        <img src="https://via.placeholder.com/150?text=Beispiel+Bild+<%= i %>"
+                            alt="Beispiel Bild <%= i %>" />
+                        <% } %>
+                            <% } %>
+
+                                <footer>
+                                    Erstellt am <%= new Date().toLocaleString("de-DE") %>
+                                </footer>
 </body>
 
 </html>

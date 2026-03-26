@@ -82,16 +82,47 @@ exports.updateById = async (req, res) => {
 exports.generatePdfById = async (req, res) => {
     try {
         const { id } = req.params;
+        const { from, to } = req.query;
+
         const supplier = await Supplier.findById(id);
         if (!supplier) return res.status(404).json({ error: "Supplier not found" });
 
-        const reports = await Report.find({ supplierId: id });
+        const filter = { supplierId: id };
+
+        if (from || to) {
+            const createdAtFilter = {};
+            if (from) {
+                createdAtFilter.$gte = new Date(from).toISOString();
+            }
+
+            if (to) {
+                const endDate = new Date(to);
+
+                endDate.setHours(23, 59, 59, 999);
+                createdAtFilter.$lte = endDate.toISOString();
+            }
+
+            filter.createdAt = createdAtFilter;
+        }
+
+        const reports = await Report.find(filter).sort({ createdAt: -1 });
+
+        const summary = {
+            totalReports: reports.length,
+            defectCount: reports.filter((report) => report.status === "DEFECT").length,
+        };
 
         const templatePath = path.join(__dirname, "../templates/supplier.ejs");
+
+        const fTo = to.substring(0, 10);
+        const fFrom = from.substring(0, 10);
 
         const html = await ejs.renderFile(templatePath, {
             supplier,
             reports,
+            from: fFrom,
+            to: fTo,
+            summary,
         });
 
         const pdfDir = path.join(__dirname, `../uploads/supplier/${supplier._id}/pdfs/`);
@@ -106,12 +137,28 @@ exports.generatePdfById = async (req, res) => {
 
         const page = await browser.newPage();
         await page.setContent(html, { waitUntil: "networkidle0" });
-        const pdf = await page.pdf({ path: pdfPath, format: "A4", printBackground: true });
+        await page.pdf({ path: pdfPath, format: "A4", printBackground: true });
         await browser.close();
 
         res.download(pdfPath);
     } catch (err) {
         console.error(err);
         res.status(500).json({ error: "could not create PDF" });
+    }
+};
+
+exports.setActivity = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { isActive } = req.state;
+
+        const updatedSupplier = await Supplier.findByIdAndUpdate(id, { isActive }, { new: true, runValidators: true });
+
+        if (!updatedSupplier) return res.status(404).json({ error: "Supplier not found" });
+
+        return res.status(200).json(updatedSupplier);
+    } catch (err) {
+        console.error(`Could not update a supplier ${err.message}`);
+        return res.status(500).json({ error: `Could not update a supplier ${err.message}` });
     }
 };

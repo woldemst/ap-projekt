@@ -6,6 +6,9 @@ import * as Sharing from "expo-sharing";
 import { File, Directory, Paths } from "expo-file-system";
 import { Image } from "expo-image";
 
+// DON'T DELETE. CAMPATIBLE JUST WITH MOBILE DEVICES
+// import ImageViewing from "react-native-image-viewing";
+
 import { Report, deleteReport, fetchReportsById, getGeneratedPDF, updateReport } from "../api/reports";
 import { fetchSuppliers, Supplier } from "../api/suppliers";
 import { API_BASE_URL } from "../config/api";
@@ -16,20 +19,21 @@ export function ReportDetails({ route }: any) {
     const { reportId, supplierId } = route.params;
     const { user } = useAuth();
 
-    const [report, setReport] = useState<Report | null>(null);
-    const [title, setTitle] = useState("");
-    const [description, setDescription] = useState("");
-    const [status, setStatus] = useState<"OK" | "DEFECT">();
-
-    const [pdf, setPdf] = useState();
-    const [images, setImages] = useState<string[] | null>([]);
-
+    // main states
     const [edit, setEdit] = useState(false);
     const [loading, setLoading] = useState(false);
     const [saving, setSaving] = useState(false);
     const [error, setError] = useState<string | null>(null);
 
-    // update functionality
+    // fetch states
+    const [report, setReport] = useState<Report | null>(null);
+    const [title, setTitle] = useState("");
+    const [description, setDescription] = useState("");
+    const [status, setStatus] = useState<"OK" | "DEFECT">();
+    const [viewerState, setViewerState] = useState(false);
+    const [selectedImgIdx, setSelectedImgIdx] = useState(0);
+
+    // update states
     const [updateNotes, setUpdateNotes] = useState("");
     const [suppliers, setSuppliers] = useState<Supplier[]>([]);
     const [selectedSupplier, setSelectedSupplier] = useState<Supplier | null>(null);
@@ -50,6 +54,14 @@ export function ReportDetails({ route }: any) {
         } finally {
             setLoading(false);
         }
+    }
+    const viewerImages = (report?.images ?? []).map((item) => ({
+        uri: `${API_BASE_URL}${item}`,
+    }));
+
+    function openViewer(idx: number) {
+        setViewerState(true);
+        setSelectedImgIdx(idx);
     }
 
     // update functionality
@@ -94,11 +106,27 @@ export function ReportDetails({ route }: any) {
 
             navigation.goBack();
         } catch (err: any) {
-            setError(err.message ?? "Failed to update report");
+            setError(err.message ?? "Aktualisierung des Berichts fehlgeschlagen");
         } finally {
             setSaving(false);
         }
     }
+
+    async function canelUpdating() {
+        try {
+            setEdit(false);
+
+            const data = await fetchReportsById(reportId);
+            setReport(data);
+            setTitle(data.title || "");
+            setDescription(data.description || "");
+            setStatus(data.status);
+            setUpdateNotes(data.updateNotes || "");
+        } catch (err: any) {
+            setError(err.message ?? "Aktualisierung des Berichts fehlgeschlagen");
+        }
+    }
+
     async function generatePDF() {
         try {
             setError(null);
@@ -189,7 +217,7 @@ export function ReportDetails({ route }: any) {
                         <TouchableOpacity
                             style={[
                                 styles.button,
-                                { width: "50%" },
+                                { width: "48%" },
                                 status === "OK" ? { backgroundColor: "grey" } : { backgroundColor: "#ccc" },
                             ]}
                             onPress={() => setStatus("OK")}
@@ -200,7 +228,7 @@ export function ReportDetails({ route }: any) {
                         <TouchableOpacity
                             style={[
                                 styles.button,
-                                { width: "50%" },
+                                { width: "48%" },
                                 status !== "OK" ? { backgroundColor: "grey" } : { backgroundColor: "#ccc" },
                             ]}
                             onPress={() => setStatus("DEFECT")}
@@ -209,26 +237,74 @@ export function ReportDetails({ route }: any) {
                             <Text style={styles.buttonText}>DEFECT</Text>
                         </TouchableOpacity>
                     </View>
+
                     {user?.role === "admin" && !edit && (
                         <TouchableOpacity onPress={() => setEdit(true)} style={[styles.button, { backgroundColor: "#1e90ff" }]}>
                             <Text style={styles.buttonText}>Bearbeiten</Text>
                         </TouchableOpacity>
                     )}
                     {user?.role === "admin" && edit && (
-                        <Button title={saving ? "Speichern..." : "Aktualisieren"} onPress={updateReportHandle} disabled={saving} />
+                        <View style={{ flexDirection: "row", justifyContent: "space-between" }}>
+                            <TouchableOpacity
+                                onPress={updateReportHandle}
+                                disabled={saving}
+                                style={[styles.button, { width: "48%", backgroundColor: "green" }]}
+                            >
+                                <Text style={styles.buttonText}>{saving ? "Speichern..." : "Aktualisieren"}</Text>
+                            </TouchableOpacity>
+                            <TouchableOpacity
+                                onPress={canelUpdating}
+                                disabled={saving}
+                                style={[styles.button, { width: "48%", backgroundColor: "red" }]}
+                            >
+                                <Text style={styles.buttonText}>Ablehnen</Text>
+                            </TouchableOpacity>
+                        </View>
                     )}
-                    <Button title="PDF erstellen" onPress={generatePDF} />
+
+                    {!edit && (
+                        <TouchableOpacity style={styles.button} onPress={generatePDF}>
+                            <Text style={styles.buttonText}>PDF erstellen</Text>
+                        </TouchableOpacity>
+                    )}
+
                     {user?.role === "admin" && !edit && (
                         <TouchableOpacity onPress={() => deleteReportHandle(reportId)} style={[styles.button, { backgroundColor: "red" }]}>
                             <Text style={styles.buttonText}>Löschen</Text>
                         </TouchableOpacity>
                     )}
-                    {report?.images &&
-                        report.images.map((img, index) => {
-                            const uri = `${API_BASE_URL}${img}`;
-                            console.log(uri);
-                            return <Image key={index} source={{ uri }} />;
-                        })}
+
+                    {report?.images && report.images.length > 0 ? (
+                        <>
+                            <FlatList
+                                data={report.images}
+                                horizontal
+                                contentContainerStyle={{ gap: 12 }}
+                                keyExtractor={(item) => item}
+                                renderItem={({ item, index }) => {
+                                    const uri = `${API_BASE_URL}${item}`;
+
+                                    return (
+                                        <TouchableOpacity onPress={() => openViewer(index)}>
+                                            <Image
+                                                source={{ uri }}
+                                                style={{ width: 140, height: 140, borderColor: "#ccc" }}
+                                                contentFit="cover"
+                                            />
+                                        </TouchableOpacity>
+                                    );
+                                }}
+                            />
+                            {/* <ImageViewing
+                                    images={viewerImages}
+                                    imageIndex={selectedImgIdx}
+                                    visible={viewerState}
+                                    onRequestClose={() => setViewerState(false)}
+                                /> */}
+                        </>
+                    ) : (
+                        <Text>Keine Bilder vorhanden</Text>
+                    )}
                 </>
             ) : null}
 
@@ -294,6 +370,7 @@ const styles = StyleSheet.create({
         paddingVertical: 8,
         borderRadius: 2,
         fontSize: 14,
+        backgroundColor: '#1e90ff'
     },
     buttonText: {
         textAlign: "center",

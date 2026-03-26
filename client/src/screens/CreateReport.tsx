@@ -188,7 +188,7 @@ export function CreateReport() {
                     <TouchableOpacity
                         style={[
                             styles.button,
-                            { width: "50%" },
+                            { width: "48%" },
                             status === "OK" ? { backgroundColor: "grey" } : { backgroundColor: "#ccc" },
                         ]}
                         onPress={() => setStatus("OK")}
@@ -199,7 +199,7 @@ export function CreateReport() {
                     <TouchableOpacity
                         style={[
                             styles.button,
-                            { width: "50%" },
+                            { width: "48%" },
                             status === "DEFECT" ? { backgroundColor: "grey" } : { backgroundColor: "#ccc" },
                         ]}
                         onPress={() => setStatus("DEFECT")}

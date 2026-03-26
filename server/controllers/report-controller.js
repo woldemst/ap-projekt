@@ -5,6 +5,9 @@ const puppeteer = require("puppeteer");
 const path = require("path");
 const fs = require("fs");
 const ejs = require("ejs");
+require("dotenv").config();
+
+const baseUrl = process.env.BASE_URL;
 
 exports.createReport = async (req, res) => {
     try {
@@ -142,7 +145,7 @@ exports.generatePdfById = async (req, res) => {
         const html = await ejs.renderFile(templatePath, {
             report,
             supplier,
-            // path,
+            baseUrl,
         });
 
         const pdfDir = path.join(__dirname, `../uploads/reports/${report._id}/pdfs`);

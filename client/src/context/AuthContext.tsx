@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useEffect, useState } from "react";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { loginUser, User } from "../api/auth";
+import { Alert, Platform } from "react-native";
 
 type AuthContextValue = {
     user: User | null;
@@ -26,10 +27,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     async function loadStoredAuth() {
         try {
-            const [storedToken, storedUser] = await Promise.all([
-                AsyncStorage.getItem("authToken"),
-                AsyncStorage.getItem("userData"),
-            ]);
+            const [storedToken, storedUser] = await Promise.all([AsyncStorage.getItem("authToken"), AsyncStorage.getItem("userData")]);
 
             if (storedToken && storedUser) {
                 setToken(storedToken);
@@ -43,23 +41,39 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
 
     async function login(email: string, password: string) {
-        
         const data = await loginUser({ email, password });
 
-        await Promise.all([
-            AsyncStorage.setItem("authToken", data.token),
-            AsyncStorage.setItem("userData", JSON.stringify(data.user)),
-        ]);
+        await Promise.all([AsyncStorage.setItem("authToken", data.token), AsyncStorage.setItem("userData", JSON.stringify(data.user))]);
 
         setToken(data.token);
         setUser(data.user);
     }
 
     async function logout() {
-        await Promise.all([AsyncStorage.removeItem("authToken"), AsyncStorage.removeItem("userData")]);
+        if (Platform.OS === "web") {
+            if (window.confirm("Möchten Sie wirklish ausloggen?")) {
+                await Promise.all([AsyncStorage.removeItem("authToken"), AsyncStorage.removeItem("userData")]);
 
-        setToken(null);
-        setUser(null);
+                setToken(null);
+                setUser(null);
+            }
+        }
+        Alert.alert("Ausloggen", "Möchten Sie wirklish ausloggen?", [
+            {
+                text: "Ablehnen",
+                onPress: () => console.log("Cancel Pressed"),
+                style: "cancel",
+            },
+            {
+                text: "Ausloggen",
+                onPress: async () => {
+                    await Promise.all([AsyncStorage.removeItem("authToken"), AsyncStorage.removeItem("userData")]);
+
+                    setToken(null);
+                    setUser(null);
+                },
+            },
+        ]);
     }
 
     return (

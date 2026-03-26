@@ -3,9 +3,11 @@ import { File, Paths } from "expo-file-system";
 import { useNavigation } from "@react-navigation/native";
 import { useEffect, useState } from "react";
 import * as Sharing from "expo-sharing";
+import DateTimePicker from "@react-native-community/datetimepicker";
 
 import { Supplier, fetchSupplierById, getGeneratedPDF, updateSupplier } from "../api/suppliers";
 import { useAuth } from "../context/AuthContext";
+import { CustomDatePicker } from "../components/Calendar";
 
 export function SupplierDetails({ route }: any) {
     const navigation = useNavigation();
@@ -26,10 +28,9 @@ export function SupplierDetails({ route }: any) {
     const [error, setError] = useState<string | null>(null);
 
     // PDF generating options
-
     const [pdfOptions, setPdfOptions] = useState(false);
-    const [from, setFrom] = useState<string>("");
-    const [to, setTo] = useState<string>("");
+    const [from, setFrom] = useState(new Date());
+    const [to, setTo] = useState(new Date());
     const [generating, setGenerating] = useState(false);
 
     async function load() {
@@ -50,7 +51,7 @@ export function SupplierDetails({ route }: any) {
             setLoading(false);
         }
     }
-    async function onSave() {
+    async function updateSupplierHandle() {
         try {
             setError(null);
 
@@ -71,21 +72,25 @@ export function SupplierDetails({ route }: any) {
 
             navigation.goBack();
         } catch (err: any) {
-            setError(err.message ?? "Failed to update supplier");
+            setError(err.message ?? "Aktualisierung des Lieferanten fehlgeschlagen");
         } finally {
             setSaving(false);
         }
     }
-
-    async function openPDFInNativeViewer(uri: string) {
+    async function canelUpdating() {
         try {
-            if (Platform.OS === "android") {
-                const contentUri = await FileSystem.getContentUriAsync(uri);
-                await Linking.openURL(contentUri);
-                return;
-            }
-            await Linking.openURL(uri);
-        } catch (err: any) {}
+            setEdit(false);
+
+            const data = await fetchSupplierById(supplierId);
+            setSupplier(data);
+            setTitle(data.title || "");
+            setContactEmail(data.contactEmail || "");
+            setNotes(data.notes || "");
+            setIsActive(data.isActive || false);
+            setPhone(data.phone || "");
+        } catch (err: any) {
+            setError(err.message ?? "Aktualisierung des Lieferanten fehlgeschlagen");
+        }
     }
 
     async function generatePDFHandle() {
@@ -165,14 +170,14 @@ export function SupplierDetails({ route }: any) {
 
                     <View style={{ flexDirection: "row", justifyContent: "space-between" }}>
                         <TouchableOpacity
-                            style={[styles.button, isActive ? { backgroundColor: "grey" } : { backgroundColor: "#ccc" }]}
+                            style={[styles.button, { width: "48%" }, isActive ? { backgroundColor: "grey" } : { backgroundColor: "#ccc" }]}
                             onPress={() => setIsActive(true)}
                             disabled={!edit}
                         >
                             <Text>ACTIV</Text>
                         </TouchableOpacity>
                         <TouchableOpacity
-                            style={[styles.button, isActive ? { backgroundColor: "#ccc" } : { backgroundColor: "grey" }]}
+                            style={[styles.button, { width: "48%" }, isActive ? { backgroundColor: "#ccc" } : { backgroundColor: "grey" }]}
                             onPress={() => setIsActive(false)}
                             disabled={!edit}
                         >
@@ -181,26 +186,51 @@ export function SupplierDetails({ route }: any) {
                     </View>
                     {user?.role === "admin" && !edit && <Button title={"Bearbeiten"} onPress={() => setEdit(true)} />}
                     {user?.role === "admin" && edit && (
-                        <Button title={saving ? "Speichern..." : "Aktualisieren"} onPress={onSave} disabled={saving} />
+                        <View style={{ flexDirection: "row", justifyContent: "space-between" }}>
+                            <TouchableOpacity
+                                onPress={updateSupplierHandle}
+                                disabled={saving}
+                                style={[styles.button, { width: "48%", backgroundColor: "green" }]}
+                            >
+                                <Text style={styles.buttonText}>{saving ? "Speichern..." : "Aktualisieren"}</Text>
+                            </TouchableOpacity>
+                            <TouchableOpacity
+                                onPress={canelUpdating}
+                                disabled={saving}
+                                style={[styles.button, { width: "48%", backgroundColor: "red" }]}
+                            >
+                                <Text style={styles.buttonText}>Ablehnen</Text>
+                            </TouchableOpacity>
+                        </View>
                     )}
 
-                    {!pdfOptions ? (
-                        <Button title="PDF erstellen" onPress={() => setPdfOptions(true)} />
-                    ) : (
+                    {!pdfOptions && !edit && (
+                        <TouchableOpacity style={styles.button} onPress={() => setPdfOptions(true)}>
+                            <Text style={styles.buttonText}>PDF erstellen</Text>
+                        </TouchableOpacity>
+                    )}
+
+                    {pdfOptions && !edit && (
                         <>
                             <View style={{ borderWidth: 1, gap: 12, padding: 8, flexDirection: "row" }}>
-                                <TextInput
+                                {/* <TextInput
                                     value={from}
                                     onChangeText={setFrom}
                                     placeholder="Von (YYYY-MM-DD)"
                                     style={{ borderWidth: 1, padding: 8, borderRadius: 4, width: "48%" }}
+                                /> */}
+                                {/* <CustomDatePicker prop={{ date: from }} />
+                                <CustomDatePicker prop={{ date: to }} /> */}
+                                <DateTimePicker
+                                    value={from}
+                                    mode={"date"}
+                                    is24Hour={true}
+                                    display="default"
+                                    // onChange={(d: Date) => setFrom(d)}
+                                    style={{ backgroundColor: "white" }}
                                 />
-                                <TextInput
-                                    value={to}
-                                    onChangeText={setTo}
-                                    placeholder="Bis (YYYY-MM-DD)"
-                                    style={{ borderWidth: 1, padding: 8, borderRadius: 4, width: "48%" }}
-                                />
+
+                                {/* <CustomDatePicker /> */}
                             </View>
                             <Button title={generating ? "Generiere..." : "PDF generieren"} onPress={generatePDFHandle} />
                         </>
@@ -214,8 +244,15 @@ export function SupplierDetails({ route }: any) {
 const styles = StyleSheet.create({
     button: {
         paddingHorizontal: 8,
-        paddingVertical: 4,
-        color: "white",
-        width: "50%",
+        paddingVertical: 8,
+        borderRadius: 2,
+        fontSize: 14,
+        backgroundColor: "#1e90ff",
+    },
+    buttonText: {
+        textAlign: "center",
+        color: "#fff",
+        fontSize: 16,
+        fontWeight: 500,
     },
 });
