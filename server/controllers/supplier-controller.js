@@ -4,6 +4,7 @@ const puppeteer = require("puppeteer");
 const path = require("path");
 const fs = require("fs");
 const ejs = require("ejs");
+const moment = require("moment");
 
 exports.createSupplier = async (req, res) => {
     try {
@@ -114,8 +115,8 @@ exports.generatePdfById = async (req, res) => {
 
         const templatePath = path.join(__dirname, "../templates/supplier.ejs");
 
-        const fTo = to.substring(0, 10);
-        const fFrom = from.substring(0, 10);
+        const fTo = to.substring(0, 10)
+        const fFrom = from.substring(0, 10)
 
         const html = await ejs.renderFile(templatePath, {
             supplier,

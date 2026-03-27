@@ -185,9 +185,16 @@ export function ReportDetails({ route }: any) {
             {loading ? <Text>Loading...</Text> : null}
             {error ? <Text style={{ color: "red" }}>{error}</Text> : null}
 
+            <View style={{ borderWidth: 1, borderColor: "#ccc", minHeight: 42, padding: 8 }}>
+                <Text>Erstellt am: {report?.createdAt}</Text>
+                <Text>Erstellt von: {report?.createdByName + " " + report?.createdByEmail}</Text>
+                <Text>{report?.updatedByEmail && "Aktualisiert von: " + report.updatedByEmail}</Text>
+                <Text>Status: {report?.status}</Text>
+            </View>
+
             {!loading ? (
                 <>
-                    <Text style={{ fontWeight: "600" }}>Name</Text>
+                    {/* <Text style={{ fontWeight: "600" }}>Titel</Text> */}
                     <TextInput
                         value={title}
                         onChangeText={setTitle}
@@ -196,7 +203,7 @@ export function ReportDetails({ route }: any) {
                         editable={edit}
                     />
 
-                    <Text style={{ fontWeight: "600" }}>Beschreibung</Text>
+                    {/* <Text style={{ fontWeight: "600" }}>Beschreibung</Text> */}
                     <TextInput
                         value={description}
                         onChangeText={setDescription}
@@ -212,67 +219,6 @@ export function ReportDetails({ route }: any) {
                         }}
                         editable={edit}
                     />
-
-                    <View style={{ flexDirection: "row", justifyContent: "space-between" }}>
-                        <TouchableOpacity
-                            style={[
-                                styles.button,
-                                { width: "48%" },
-                                status === "OK" ? { backgroundColor: "grey" } : { backgroundColor: "#ccc" },
-                            ]}
-                            onPress={() => setStatus("OK")}
-                            disabled={!edit}
-                        >
-                            <Text style={styles.buttonText}>OK</Text>
-                        </TouchableOpacity>
-                        <TouchableOpacity
-                            style={[
-                                styles.button,
-                                { width: "48%" },
-                                status !== "OK" ? { backgroundColor: "grey" } : { backgroundColor: "#ccc" },
-                            ]}
-                            onPress={() => setStatus("DEFECT")}
-                            disabled={!edit}
-                        >
-                            <Text style={styles.buttonText}>DEFECT</Text>
-                        </TouchableOpacity>
-                    </View>
-
-                    {user?.role === "admin" && !edit && (
-                        <TouchableOpacity onPress={() => setEdit(true)} style={[styles.button, { backgroundColor: "#1e90ff" }]}>
-                            <Text style={styles.buttonText}>Bearbeiten</Text>
-                        </TouchableOpacity>
-                    )}
-                    {user?.role === "admin" && edit && (
-                        <View style={{ flexDirection: "row", justifyContent: "space-between" }}>
-                            <TouchableOpacity
-                                onPress={updateReportHandle}
-                                disabled={saving}
-                                style={[styles.button, { width: "48%", backgroundColor: "green" }]}
-                            >
-                                <Text style={styles.buttonText}>{saving ? "Speichern..." : "Aktualisieren"}</Text>
-                            </TouchableOpacity>
-                            <TouchableOpacity
-                                onPress={canelUpdating}
-                                disabled={saving}
-                                style={[styles.button, { width: "48%", backgroundColor: "red" }]}
-                            >
-                                <Text style={styles.buttonText}>Ablehnen</Text>
-                            </TouchableOpacity>
-                        </View>
-                    )}
-
-                    {!edit && (
-                        <TouchableOpacity style={styles.button} onPress={generatePDF}>
-                            <Text style={styles.buttonText}>PDF erstellen</Text>
-                        </TouchableOpacity>
-                    )}
-
-                    {user?.role === "admin" && !edit && (
-                        <TouchableOpacity onPress={() => deleteReportHandle(reportId)} style={[styles.button, { backgroundColor: "red" }]}>
-                            <Text style={styles.buttonText}>Löschen</Text>
-                        </TouchableOpacity>
-                    )}
 
                     {report?.images && report.images.length > 0 ? (
                         <>
@@ -304,6 +250,71 @@ export function ReportDetails({ route }: any) {
                         </>
                     ) : (
                         <Text>Keine Bilder vorhanden</Text>
+                    )}
+
+                    {edit && (
+                        <>
+                            <View style={{ flexDirection: "row", justifyContent: "space-between" }}>
+                                <TouchableOpacity
+                                    style={[
+                                        styles.button,
+                                        { width: "48%" },
+                                        status === "OK" ? { backgroundColor: "grey" } : { backgroundColor: "#ccc" },
+                                    ]}
+                                    onPress={() => setStatus("OK")}
+                                    disabled={!edit}
+                                >
+                                    <Text style={styles.buttonText}>OK</Text>
+                                </TouchableOpacity>
+                                <TouchableOpacity
+                                    style={[
+                                        styles.button,
+                                        { width: "48%" },
+                                        status !== "OK" ? { backgroundColor: "grey" } : { backgroundColor: "#ccc" },
+                                    ]}
+                                    onPress={() => setStatus("DEFECT")}
+                                    disabled={!edit}
+                                >
+                                    <Text style={styles.buttonText}>DEFECT</Text>
+                                </TouchableOpacity>
+                            </View>
+                        </>
+                    )}
+
+                    {user?.role === "admin" && !edit && (
+                        <TouchableOpacity onPress={() => setEdit(true)} style={[styles.button, { backgroundColor: "#1e90ff" }]}>
+                            <Image source={require("../../assets/edit.svg")} style={{}}/>
+                        </TouchableOpacity>
+                    )}
+                    {user?.role === "admin" && edit && (
+                        <View style={{ flexDirection: "row", justifyContent: "space-between" }}>
+                            <TouchableOpacity
+                                onPress={updateReportHandle}
+                                disabled={saving}
+                                style={[styles.button, { width: "48%", backgroundColor: "green" }]}
+                            >
+                                <Text style={styles.buttonText}>{saving ? "Speichern..." : "Aktualisieren"}</Text>
+                            </TouchableOpacity>
+                            <TouchableOpacity
+                                onPress={canelUpdating}
+                                disabled={saving}
+                                style={[styles.button, { width: "48%", backgroundColor: "red" }]}
+                            >
+                                <Text style={styles.buttonText}>Ablehnen</Text>
+                            </TouchableOpacity>
+                        </View>
+                    )}
+
+                    {!edit && (
+                        <TouchableOpacity style={styles.button} onPress={generatePDF}>
+                            <Text style={styles.buttonText}>PDF erstellen</Text>
+                        </TouchableOpacity>
+                    )}
+
+                    {user?.role === "admin" && edit && (
+                        <TouchableOpacity onPress={() => deleteReportHandle(reportId)} style={[styles.button, { backgroundColor: "red" }]}>
+                            <Text style={styles.buttonText}>Löschen</Text>
+                        </TouchableOpacity>
                     )}
                 </>
             ) : null}
@@ -370,7 +381,7 @@ const styles = StyleSheet.create({
         paddingVertical: 8,
         borderRadius: 2,
         fontSize: 14,
-        backgroundColor: '#1e90ff'
+        backgroundColor: "#1e90ff",
     },
     buttonText: {
         textAlign: "center",

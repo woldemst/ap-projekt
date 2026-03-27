@@ -24,8 +24,16 @@ function HomeScreen() {
                     </Text>
                 </View>
             </View>
-            <View style={{ width: "100%", flexDirection: "row", justifyContent: "center", height: "100%", alignItems: "center" }}>
-                <TouchableOpacity onPress={() => navigation.navigate("CreateReport")}>
+            <View
+                style={{
+                    width: "100%",
+                    margin: "auto",
+                    flexDirection: "row",
+                    justifyContent: "center",
+                    alignItems: "center",
+                }}
+            >
+                <TouchableOpacity style={{}} onPress={() => navigation.navigate("CreateReport")}>
                     <Image source={require("./assets/plus.svg")} style={{ width: 140, height: 140 }} />
                 </TouchableOpacity>
             </View>

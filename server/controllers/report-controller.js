@@ -5,6 +5,7 @@ const puppeteer = require("puppeteer");
 const path = require("path");
 const fs = require("fs");
 const ejs = require("ejs");
+const { report } = require("process");
 require("dotenv").config();
 
 const baseUrl = process.env.BASE_URL;
@@ -12,6 +13,7 @@ const baseUrl = process.env.BASE_URL;
 exports.createReport = async (req, res) => {
     try {
         const { title, description = "", status, supplierId } = req.body;
+        const reportId = req._id;
 
         if (!title || !status || !supplierId) {
             return res.status(400).json({ error: "title, status und supplierId sind erforderlich" });
@@ -25,9 +27,12 @@ exports.createReport = async (req, res) => {
         const supplier = await Supplier.findById(supplierId);
         if (!supplier) return res.status(404).json({ error: "Supplier not found" });
 
-        const uploadedImages = Array.isArray(req.files) ? req.files.map((file) => `/uploads/reports/images/${file.filename}`) : [];
+        const uploadedImages = Array.isArray(req.files)
+            ? req.files.map((file) => `/uploads/reports/${reportId}/images/${file.filename}`)
+            : [];
 
         const report = await Report.create({
+            _id: reportId,
             title: title.trim(),
             description: description.trim(),
             supplierId,
