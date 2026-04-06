@@ -12,14 +12,38 @@ export type LoginResponse = {
     user: User;
 };
 
-export async function loginUser(input: { email: string; password: string }): Promise<LoginResponse> {
-    const res = await fetch(`${API_BASE_URL}/api/auth/login`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(input),
-    });
+// export async function loginUser(input: { email: string; password: string }): Promise<LoginResponse> {
+//     const res = await fetch(`${API_BASE_URL}/api/auth/login`, {
+//         method: "POST",
+//         headers: { "Content-Type": "application/json" },
+//         body: JSON.stringify(input),
+//     });
 
-    const data = await res.json().catch(() => null);
-    if (!res.ok) throw new Error(data?.message ?? `Login fehlgeschlagen: ${res.status}`);
-    return data;
+//     const data = await res.json().catch(() => null);
+//     if (!res.ok) throw new Error(data?.message ?? `Login fehlgeschlagen: ${res.status}`);
+//     return data;
+// }
+export async function loginUser(input: { email: string; password: string }): Promise<LoginResponse> {
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), 10000);
+
+    try {
+        const res = await fetch(`${API_BASE_URL}/api/auth/login`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(input),
+            signal: controller.signal,
+        });
+
+        const data = await res.json().catch(() => null);
+        if (!res.ok) throw new Error(data?.message ?? `Login fehlgeschlagen: ${res.status}`);
+        return data;
+    } catch (err: any) {
+        if (err?.name === "AbortError") {
+            throw new Error("Server nicht erreichbar (Timeout)");
+        }
+        throw err;
+    } finally {
+        clearTimeout(timer);
+    }
 }
