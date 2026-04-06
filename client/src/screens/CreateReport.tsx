@@ -1,17 +1,5 @@
 import React, { useCallback, useState } from "react";
-import {
-    View,
-    Text,
-    TextInput,
-    Button,
-    FlatList,
-    Pressable,
-    TouchableOpacity,
-    StyleSheet,
-    Alert,
-    ScrollView,
-    Platform,
-} from "react-native";
+import { View, Text, TextInput, Button, Pressable, TouchableOpacity, StyleSheet, Alert, ScrollView, Platform } from "react-native";
 import { useFocusEffect, useNavigation } from "@react-navigation/native";
 import * as ImagePicker from "expo-image-picker";
 
@@ -212,18 +200,14 @@ export function CreateReport() {
                 {Platform.OS === "web" && <Button title="Bild aus Galerie wählen" onPress={pickFromLibrary} />}
 
                 {images.length > 0 ? (
-                    <FlatList
-                        data={images}
-                        horizontal
-                        keyExtractor={(uri) => uri}
-                        contentContainerStyle={{ gap: 12 }}
-                        renderItem={({ item }) => (
-                            <View style={{ width: 120, gap: 8 }}>
+                    <ScrollView horizontal contentContainerStyle={{ gap: 12 }}>
+                        {images.map((item) => (
+                            <View key={item} style={{ width: 120, gap: 8 }}>
                                 <Image source={item} style={{ width: 120, height: 120, gap: 8 }} contentFit="cover" />
                                 <Button title="Entfernen" onPress={() => removeImage(item)} />
                             </View>
-                        )}
-                    />
+                        ))}
+                    </ScrollView>
                 ) : (
                     <Text>Keine Bilder ausgewählt</Text>
                 )}
@@ -231,20 +215,16 @@ export function CreateReport() {
                 <Text style={{ fontWeight: "600" }}>Lieferanten auswählen</Text>
                 <Button title="Lieferanten neu laden" onPress={loadSuppliers} />
 
-                <FlatList
-                    data={suppliers}
-                    keyExtractor={(s) => s._id}
-                    style={{ maxHeight: 180, borderWidth: 1 }}
-                    renderItem={({ item }) => {
+                <View style={{ maxHeight: 220, borderWidth: 1 }}>
+                    {suppliers.map((item) => {
                         const selected = selectedSupplier?._id === item._id;
                         const isSelectable = item.isActive === true;
 
                         return (
                             <Pressable
+                                key={item._id}
                                 onPress={() => {
-                                    if (isSelectable) {
-                                        setSelectedSupplier(item);
-                                    }
+                                    if (isSelectable) setSelectedSupplier(item);
                                 }}
                                 disabled={!isSelectable}
                                 style={[
@@ -260,8 +240,8 @@ export function CreateReport() {
                                 <Text>{item.title}</Text>
                             </Pressable>
                         );
-                    }}
-                />
+                    })}
+                </View>
 
                 <Text>Lieferant: {selectedSupplier ? selectedSupplier.title : "Keiner ausgewählt"}</Text>
 

@@ -1,7 +1,19 @@
-import { Button, Text, TextInput, View, StyleSheet, TouchableOpacity, Linking, FlatList, Pressable, Alert, Platform } from "react-native";
+import {
+    Button,
+    Text,
+    TextInput,
+    View,
+    StyleSheet,
+    TouchableOpacity,
+    FlatList,
+    Pressable,
+    Alert,
+    Platform,
+    ScrollView,
+} from "react-native";
+
 import { useNavigation } from "@react-navigation/native";
 import { useEffect, useState } from "react";
-import * as Print from "expo-print";
 import * as Sharing from "expo-sharing";
 import { File, Directory, Paths } from "expo-file-system";
 import { Image } from "expo-image";
@@ -20,7 +32,9 @@ export function ReportDetails({ route }: any) {
     const { user } = useAuth();
 
     // main states
-    const [edit, setEdit] = useState(false);
+    const [mode, setMode] = useState<"view" | "edit" | "pdf">("view");
+    const isEditMode = mode === "edit";
+
     const [loading, setLoading] = useState(false);
     const [saving, setSaving] = useState(false);
     const [error, setError] = useState<string | null>(null);
@@ -104,7 +118,8 @@ export function ReportDetails({ route }: any) {
                 status,
             });
 
-            navigation.goBack();
+            setMode("view");
+            await load();
         } catch (err: any) {
             setError(err.message ?? "Aktualisierung des Berichts fehlgeschlagen");
         } finally {
@@ -114,7 +129,7 @@ export function ReportDetails({ route }: any) {
 
     async function canelUpdating() {
         try {
-            setEdit(false);
+            setMode("view");
 
             const data = await fetchReportsById(reportId);
             setReport(data);
@@ -181,7 +196,7 @@ export function ReportDetails({ route }: any) {
     }, []);
 
     return (
-        <View style={{ padding: 16, gap: 12 }}>
+        <ScrollView contentContainerStyle={{ padding: 16, gap: 12, paddingBottom: 32 }} keyboardShouldPersistTaps="handled">
             {loading ? <Text>Loading...</Text> : null}
             {error ? <Text style={{ color: "red" }}>{error}</Text> : null}
 
@@ -199,8 +214,8 @@ export function ReportDetails({ route }: any) {
                         value={title}
                         onChangeText={setTitle}
                         placeholder="Name des Lieferanten"
-                        style={{ borderWidth: 1, padding: 8, borderRadius: 4, borderColor: !edit ? "#ccc" : "black" }}
-                        editable={edit}
+                        style={{ borderWidth: 1, padding: 8, borderRadius: 4, borderColor: !isEditMode ? "#ccc" : "black" }}
+                        editable={isEditMode}
                     />
 
                     {/* <Text style={{ fontWeight: "600" }}>Beschreibung</Text> */}
@@ -215,9 +230,9 @@ export function ReportDetails({ route }: any) {
                             padding: 8,
                             borderRadius: 4,
                             minHeight: 90,
-                            borderColor: !edit ? "#ccc" : "black",
+                            borderColor: !isEditMode ? "#ccc" : "black",
                         }}
-                        editable={edit}
+                        editable={isEditMode}
                     />
 
                     {report?.images && report.images.length > 0 ? (
@@ -252,7 +267,7 @@ export function ReportDetails({ route }: any) {
                         <Text>Keine Bilder vorhanden</Text>
                     )}
 
-                    {edit && (
+                    {isEditMode && (
                         <>
                             <View style={{ flexDirection: "row", justifyContent: "space-between" }}>
                                 <TouchableOpacity
@@ -262,7 +277,7 @@ export function ReportDetails({ route }: any) {
                                         status === "OK" ? { backgroundColor: "grey" } : { backgroundColor: "#ccc" },
                                     ]}
                                     onPress={() => setStatus("OK")}
-                                    disabled={!edit}
+                                    disabled={!isEditMode}
                                 >
                                     <Text style={styles.buttonText}>OK</Text>
                                 </TouchableOpacity>
@@ -273,7 +288,7 @@ export function ReportDetails({ route }: any) {
                                         status !== "OK" ? { backgroundColor: "grey" } : { backgroundColor: "#ccc" },
                                     ]}
                                     onPress={() => setStatus("DEFECT")}
-                                    disabled={!edit}
+                                    disabled={!isEditMode}
                                 >
                                     <Text style={styles.buttonText}>DEFECT</Text>
                                 </TouchableOpacity>
@@ -281,12 +296,14 @@ export function ReportDetails({ route }: any) {
                         </>
                     )}
 
-                    {user?.role === "admin" && !edit && (
-                        <TouchableOpacity onPress={() => setEdit(true)} style={[styles.button, { backgroundColor: "#1e90ff" }]}>
-                            <Image source={require("../../assets/edit.svg")} style={{}}/>
-                        </TouchableOpacity>
-                    )}
-                    {user?.role === "admin" && edit && (
+                    {mode === "view" ? (
+                        <View style={{ gap: 8 }}>
+                            {user?.role === "admin" ? <Button title="Bearbeiten" onPress={() => setMode("edit")} /> : null}
+                            <Button title="PDF erstellen" onPress={() => setMode("pdf")} />
+                        </View>
+                    ) : null}
+
+                    {mode === "edit" ? (
                         <View style={{ flexDirection: "row", justifyContent: "space-between" }}>
                             <TouchableOpacity
                                 onPress={updateReportHandle}
@@ -300,26 +317,27 @@ export function ReportDetails({ route }: any) {
                                 disabled={saving}
                                 style={[styles.button, { width: "48%", backgroundColor: "red" }]}
                             >
-                                <Text style={styles.buttonText}>Ablehnen</Text>
+                                <Text style={styles.buttonText}>Abbrechen</Text>
                             </TouchableOpacity>
                         </View>
-                    )}
+                    ) : null}
 
-                    {!edit && (
-                        <TouchableOpacity style={styles.button} onPress={generatePDF}>
-                            <Text style={styles.buttonText}>PDF erstellen</Text>
-                        </TouchableOpacity>
-                    )}
+                    {mode === "pdf" ? (
+                        <View style={{ gap: 8 }}>
+                            <Button title="PDF jetzt erstellen" onPress={generatePDF} />
+                            <Button title="Zurück" onPress={() => setMode("view")} />
+                        </View>
+                    ) : null}
 
-                    {user?.role === "admin" && edit && (
+                    {user?.role === "admin" && mode === "edit" ? (
                         <TouchableOpacity onPress={() => deleteReportHandle(reportId)} style={[styles.button, { backgroundColor: "red" }]}>
                             <Text style={styles.buttonText}>Löschen</Text>
                         </TouchableOpacity>
-                    )}
+                    ) : null}
                 </>
             ) : null}
 
-            {edit && (
+            {isEditMode && (
                 <>
                     <Text>Lieferant: {selectedSupplier ? selectedSupplier.title : "None"}</Text>
 
@@ -335,21 +353,19 @@ export function ReportDetails({ route }: any) {
                             padding: 8,
                             borderRadius: 4,
                             minHeight: 90,
-                            borderColor: !edit ? "#ccc" : "black",
+                            borderColor: !isEditMode ? "#ccc" : "black",
                         }}
-                        editable={edit}
+                        editable={isEditMode}
                     />
 
-                    <FlatList
-                        data={suppliers}
-                        keyExtractor={(s) => s._id}
-                        style={{ maxHeight: 180, borderWidth: 1 }}
-                        renderItem={({ item }) => {
+                    <View style={{ maxHeight: 220, borderWidth: 1 }}>
+                        {suppliers.map((item) => {
                             const selected = selectedSupplier?._id === item._id;
                             const isSelectable = item.isActive === true;
 
                             return (
                                 <Pressable
+                                    key={item._id}
                                     onPress={() => {
                                         if (isSelectable) setSelectedSupplier(item);
                                     }}
@@ -368,11 +384,11 @@ export function ReportDetails({ route }: any) {
                                     {!isSelectable ? <Text>Inaktiv</Text> : null}
                                 </Pressable>
                             );
-                        }}
-                    />
+                        })}
+                    </View>
                 </>
             )}
-        </View>
+        </ScrollView>
     );
 }
 const styles = StyleSheet.create({

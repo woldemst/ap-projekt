@@ -1,4 +1,4 @@
-import { Button, Text, TextInput, View, StyleSheet, TouchableOpacity, Platform, Alert } from "react-native";
+import { Button, Text, TextInput, View, StyleSheet, TouchableOpacity, Platform, Alert, ScrollView } from "react-native";
 import { File, Paths } from "expo-file-system";
 import { useEffect, useState } from "react";
 import * as Sharing from "expo-sharing";
@@ -138,7 +138,7 @@ export function SupplierDetails({ route }: any) {
     }, []);
 
     return (
-        <View style={{ padding: 16, gap: 12 }}>
+        <ScrollView contentContainerStyle={{ padding: 16, gap: 12, paddingBottom: 32 }} keyboardShouldPersistTaps="handled">
             {loading ? <Text>Loading...</Text> : null}
             {error ? <Text style={{ color: "red" }}>{error}</Text> : null}
 
@@ -260,7 +260,7 @@ export function SupplierDetails({ route }: any) {
                     ) : null}
                 </>
             ) : null}
-        </View>
+        </ScrollView>
     );
 }
 
