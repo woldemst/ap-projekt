@@ -204,7 +204,7 @@ export function ReportDetails({ route }: any) {
                 <Text>Erstellt am: {report?.createdAt}</Text>
                 <Text>Erstellt von: {report?.createdByName + " " + report?.createdByEmail}</Text>
                 <Text>{report?.updatedByEmail && "Aktualisiert von: " + report.updatedByEmail}</Text>
-                <Text>Status: {report?.status}</Text>
+                <Text>Status: {report?.status === "OK" ? "OK" : "DEFEKT"}</Text>
             </View>
 
             {!loading ? (
@@ -290,7 +290,7 @@ export function ReportDetails({ route }: any) {
                                     onPress={() => setStatus("DEFECT")}
                                     disabled={!isEditMode}
                                 >
-                                    <Text style={styles.buttonText}>DEFECT</Text>
+                                    <Text style={styles.buttonText}>DEFEKT</Text>
                                 </TouchableOpacity>
                             </View>
                         </>

@@ -71,7 +71,7 @@ describe("authController.login", () => {
                 email: "a@a.de",
                 role: "employee",
             },
-            message: "Logged in successfully",
+            message: "Login erfolgreich",
         });
     });
 });

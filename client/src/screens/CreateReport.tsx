@@ -192,7 +192,7 @@ export function CreateReport() {
                         ]}
                         onPress={() => setStatus("DEFECT")}
                     >
-                        <Text style={styles.buttonText}>DEFECT</Text>
+                        <Text style={styles.buttonText}>DEFEKT</Text>
                     </TouchableOpacity>
                 </View>
 

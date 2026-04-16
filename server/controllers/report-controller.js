@@ -5,7 +5,6 @@ const puppeteer = require("puppeteer");
 const path = require("path");
 const fs = require("fs");
 const ejs = require("ejs");
-const { report } = require("process");
 require("dotenv").config();
 
 const baseUrl = process.env.BASE_URL;
