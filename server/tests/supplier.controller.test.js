@@ -1,22 +1,27 @@
 const supplierController = require("../controllers/supplier-controller");
+const Supplier = require("../models/Supplier");
+
+jest.mock("../models/Supplier");
 
 describe("supplierController.getSupplierById", () => {
-    test("gibt 404 zurück wenn Lieferant nicht gefunden", async () => {
-        const req = {
-            params: { id: "69ba8ce0a5b2fd580db289d8" },
-        };
+  test("should return 404 if supplier does not exist", async () => {
+    const req = {
+      params: { id: "missing-id" },
+    };
 
-        const res = {
-            status: jest.fn().mockReturnThis(),
-            json: jest.fn(),
-        };
+    const res = {
+      status: jest.fn().mockReturnThis(),
+      json: jest.fn(),
+    };
 
-        await supplierController.getSupplierById(req, res);
+    Supplier.findById.mockResolvedValue(null);
 
-        expect(Supplier.findById).toHaveBeenCalledWith("69ba8ce0a5b2fd580db289d8");
-        expect(res.status).toHaveBeenCalledWith(404);
-        expect(res.json).toHaveBeenCalledWith({
-            error: "Lieferant nicht gefunden",
-        });
+    await supplierController.getSupplierById(req, res);
+
+    expect(Supplier.findById).toHaveBeenCalledWith("missing-id");
+    expect(res.status).toHaveBeenCalledWith(404);
+    expect(res.json).toHaveBeenCalledWith({
+      error: "Supplier not found",
     });
+  });
 });
